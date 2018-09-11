@@ -6,7 +6,9 @@ import './body.html';
 // Using a template
 Template.body.helpers({
   tasks() {
-    return Tasks.find({});
+    // return Tasks.find({});
+    // Show newest tasks at the top
+   return Tasks.find({}, { sort: { createdAt: -1 } });
   },
 });
 
