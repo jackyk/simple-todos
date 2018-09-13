@@ -1,4 +1,3 @@
-ls
 import { Template } from 'meteor/templating';
 import {reactiveDict} from 'meteor/reactive-dict';
 import { Tasks } from '../api/tasks.js';
