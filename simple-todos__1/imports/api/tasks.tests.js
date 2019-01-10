@@ -12,8 +12,6 @@ if (Meteor.isServer) {
     describe('methods', function() {
         const userId = Random.id();
         let taskId;
-        let setChecked;
-        // let text;
 
         beforeEach( function() {
             // clear your test database (collection)
@@ -46,17 +44,43 @@ if (Meteor.isServer) {
       });
 
 //  check if item is checked
-      it('Item has not been checked', function(){
-        // const status = checked:false;
+      it('Item has been checked', function(){
+        // let checked = false;
         const checked = Meteor.server.method_handlers['tasks.setChecked'];
-        const invocation ={taskId, setChecked};
-        console.log(invocation, taskId);
-        checked.apply( invocation, [setChecked]);
-        assert.equal(Tasks.find().count(), 2);
+        const invocation = { userId };
+        console.log(invocation);
+        checked.apply( invocation,[taskId, false]);
+        assert.equal(Tasks.find({checked : false}).count(), 1);
       });
 
+
+      it('This is your private account', function(){
+        const private = Meteor.server.method_handlers['tasks.setPrivate'];
+        const invocation = { userId };
+        console.log(invocation);
+        private.apply( invocation,[taskId, true]);
+        assert.equal(Tasks.find({private : true}).count(), 1);
+      });
+      // to insert
+      it('Item has been inserted', function(){
+        let text= "Reading";
+        const insertion = Meteor.server.method_handlers['tasks.insert'];
+        const invocation = {userId};
+        console.log(invocation, text);
+        insertion.apply( invocation, [ text]);
+        assert.equal(Tasks.find().count(), 2);
+
+      });
+      // User is logged In cannot insert task
+      // Can delete their own task
+      // Cannot delete other users task
+      // Can set checked personal task
+      // Cannot set someone else's task as checked
+      // Can set Private
+      // Cannot set someone elses task as Private
+        
     });
 });
-}
+} 
 
 
