@@ -1,17 +1,20 @@
+import {Meteor} from 'meteor/meteor';   
 import { Template } from 'meteor/templating';
 import {reactiveDict} from 'meteor/reactive-dict';
-import { Tasks } from '../api/tasks.js';
-import './task.js';
 
-import './body.html';
+import { Tasks } from '../../api/tasks.js';
+
+import '../task.js';
+
+import './landing.html';
 // Using a template
 
-Template.body.onCreated(function bodyOnCreated() {
+Template.Landing_page.onCreated(function bodyOnCreated() {
   this.state = new ReactiveDict();
   Meteor.subscribe('tasks');
 });
 //pass data into the template
-Template.body.helpers({
+Template.Landing_page.helpers({
   tasks() {
     const instance = Template.instance();
     if (instance.state.get('hideCompleted')) {
@@ -30,7 +33,7 @@ Template.body.helpers({
   },
 });
 
-Template.body.events({
+Template.Landing_page.events({
   // 'submit .new-task'(event) {
     'submit .new-task': function(event){
     // Prevent default browser form submit
