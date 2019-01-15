@@ -3,16 +3,33 @@
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
 import { assert } from 'chai';
-// import { Accounts } from 'meteor/'
+import { Accounts } from 'meteor/accounts-base'
 
 import {Tasks} from './tasks.js';
+// import { constants } from 'zlib';
  
 if (Meteor.isServer) {
   describe('Tasks', function() {
     describe('methods', function() {
-        const userId = Random.id();
-        // const newUser = Random.id();
-        let taskId;
+        // const userId = Random.id();
+        const username ="Jacky Kimani";
+
+        let taskId, userId;
+
+        before( function(){
+          // create user if not already created by checking the database
+          const user = Meteor.users.findOne({username:username});
+          if(!user){
+            userId = Accounts.createUser({
+              'username' : username,
+              'email' : 'jackykimani13@gmail.com',
+              'password' : 'Ch@ng3m3',
+            });
+            } else{
+              userId = user._id;
+            }
+          
+        })
 
         beforeEach( function() {
         // clear your test database (collection)
@@ -26,7 +43,7 @@ if (Meteor.isServer) {
           });
         });
 
-        // remove your own task
+ //<--------------------------- remove your own task --------------------------->
         it('can delete owned task', function() {
         // Find the internal implementation of the task method so we can
         // test it in isolation
@@ -35,7 +52,7 @@ if (Meteor.isServer) {
         // Set up a fake method invocation that looks like what the method expects
         // returns the value : takes all the things it needs and create a mock and tests if the function creates it
         const invocation = {userId};
-        console.log(invocation);
+        // console.log(invocation);
  
         // Run the method with `this` set to the fake invocation
         deleteTask.apply(invocation, [taskId]);
@@ -44,37 +61,39 @@ if (Meteor.isServer) {
         assert.equal(Tasks.find().count(), 0);
       });
 
-//  check if item is checked
+//<---------------------------  check if item is checked --------------------------->
       it('Item has been checked', function(){
         // let checked = false;
         const checked = Meteor.server.method_handlers['tasks.setChecked'];
         const invocation = { userId };
         console.log(invocation);
-        checked.apply( invocation,[taskId, false]);
-        assert.equal(Tasks.find({checked : false}).count(), 1);
+        checked.apply( invocation,[taskId, true]);
+        assert.equal(Tasks.find({checked : true}).count(), 1);
       });
 
+//<---------------------------  private --------------------------->
 
       it('This is your private account', function(){
         const private = Meteor.server.method_handlers['tasks.setPrivate'];
         const invocation = { userId };
-        console.log(invocation);
+        // console.log(invocation);
         private.apply( invocation,[taskId, true]);
         assert.equal(Tasks.find({private : true}).count(), 1);
       });
-      // to insert
+
+//<--------------------------- to insert --------------------------->
       it('Item has been inserted', function(){
         let text= "Reading";
         const insertion = Meteor.server.method_handlers['tasks.insert'];
         const invocation = {userId};
-        console.log(invocation, text);
+        // console.log(invocation, text);
         insertion.apply( invocation, [ text]);
         assert.equal(Tasks.find().count(), 2);
 
       });
 
 
-      // Cannot delete someone else task
+//<--------------------------- Cannot delete someone else task--------------------------->
       it('cannot delete task that is not yours', function(){
         // set existing task as private
         // let setToPrivate = true;
@@ -102,9 +121,68 @@ if (Meteor.isServer) {
       });
 
 
+//<---------------------------cannot check another user's task--------------------------->
+
+      it('cannot check another user task', function(){
+        Tasks.update(taskId, {$set: {private : true} });
+
+        const checkUserId =  Random.id();
+        const checked = Meteor.server.method_handlers['tasks.setChecked'];
+        const fakeChecker = {'userId': checkUserId};
+
+        assert.throws(function(){
+          // checks to ensure that the exception is thrown first
+        checked.apply(fakeChecker,[taskId, true]); 
+        }, Meteor.Error, 'not-authorized')
+        
+        assert.equal(Tasks.find().count(), 1);
+        // assert.equal(Tasks.find({checked : false}).count(), 1);
+      });
 
 
+//<---------------------------Cannot insert task if not logged in  --------------------------->
+      it('user not logged in', function(){
+        // Tasks.update(taskId, {$set: {private : true} });
 
+        // let notLoggedIn = !this.user
+        let text = "check emails";
+        const insertion = Meteor.server.method_handlers['tasks.insert'];
+
+        const cannotInsert = { };
+        // console.log(cannotInsert);
+        assert.throws(function(){
+          insertion.apply(cannotInsert, [text]);
+        }, Meteor.Error, 'not-authorized -- name' )
+        assert.equal(Tasks.find().count(),1)
+
+      });
+
+// <--------------------------- Cannot set someone elses task as Private  --------------------------->
+      it('Cannot not set someone else task if private', function(){
+        // Tasks.update(taskId, {$set: {private : true} });
+
+        const checkPrivateId = Random.id();
+        const bePrivate = Meteor.server.method_handlers['tasks.setPrivate'];
+        const notPrivate = {'userId' :checkPrivateId};
+
+        assert.throws(function(){
+          bePrivate.apply(notPrivate, [taskId, true]);
+
+        }, Meteor.Error, 'not-authorized -- Should be private')
+        // assert.equal(Task.find().count(),1)
+        assert.equal(Tasks.find({private : true}).count(), 0);
+
+      });
+
+// < --------------------------- Can delete someone else's public task   --------------------------->
+      it('can delete someone else public task', function(){
+        // Tasks.update(taskId, {$set: {private: false} });
+        const deletePublic = Random.id();
+        const delPublic = Meteor.server.method_handlers['tasks.remove'];
+        const Public = {userId : deletePublic};
+         delPublic.apply(Public, [taskId, true]);
+         assert.equal(Tasks.find({private:true}).count(),0);
+      })
 
 
       // User is logged In cannot insert task
