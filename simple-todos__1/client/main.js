@@ -9,6 +9,7 @@ import "../imports/startup/router.js";
 // Imclude pages
 import "../imports/ui/pages/landing.js";
 import "../imports/ui/pages/prompt.js";
+import "../imports/ui/pages/task_edit.js";
 
 import './main.html';
 

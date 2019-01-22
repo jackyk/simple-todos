@@ -35,7 +35,7 @@ taskGroup.route('/edit/:taskId',{
     action:function(params,queryParams){
         var taskId = FlowRouter.getParam('taskId');
         BlazeLayout.render('App_Body',
-        {main:'Edit_task_page', taskId:taskId}
+        {main:'Task_edit_page', taskId:taskId}
         );
     }
 });

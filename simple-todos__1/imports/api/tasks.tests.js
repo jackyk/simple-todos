@@ -92,6 +92,24 @@ if (Meteor.isServer) {
 
       });
 
+//<--------------------------- Edit task--------------------------->
+it('task has been edited', function(){
+  Tasks.update(taskId, {$set: {private : true} });
+
+  const editingUser = Random.id();
+  let text = "New task edit";
+  const editing = Meteor.server.method_handlers['tasks.update'];
+  const taskEdition = {'userId': editingUser};
+  // console.log(taskEdition, [text]);
+  assert.throws(function(){
+
+  editing.apply(taskEdition, [taskId,text]);
+  },  Meteor.Error, 'non-authorized -- make changes');
+  
+  assert.equal(Tasks.find().count(),1);
+});
+
+
 
 //<--------------------------- Cannot delete someone else task--------------------------->
       it('cannot delete task that is not yours', function(){
